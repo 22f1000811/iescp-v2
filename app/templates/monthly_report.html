@@ -1,0 +1,27 @@
+<!-- app/templates/monthly_report.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Activity Report</title>
+</head>
+<body>
+    <h1>Monthly Activity Report for {{ sponsor.username }}</h1>
+
+    <h2>Campaigns</h2>
+    <ul>
+        {% for campaign in campaigns %}
+            <li>{{ campaign.name }} - Budget: {{ campaign.budget }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Ad Requests</h2>
+    <ul>
+        {% for ad_request in ad_requests %}
+            <li>{{ ad_request.requirements }} - Status: {{ ad_request.status_influencer }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Add more details as needed -->
+</body>
+</html>

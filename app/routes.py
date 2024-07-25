@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, url_for, flash, redirect, request, current_app
+from flask import Blueprint, render_template, url_for, flash, redirect, request, current_app, make_response, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
-from app import db
+from app import db , send_daily_reminders, send_monthly_reports
 from app.models import User, Campaign, AdRequest
 # from app.forms import RegistrationForm, LoginForm, CampaignForm, AdRequestForm
 from app.forms import SponsorRegistrationForm, InfluencerRegistrationForm, LoginForm, CampaignForm, AdRequestForm
@@ -12,6 +12,9 @@ from datetime import date, datetime, timedelta
 from collections import defaultdict
 import os
 import uuid
+import csv
+from flask import send_file, after_this_request
+from io import StringIO
 
 main = Blueprint('main', __name__)
 
@@ -784,3 +787,51 @@ def admin_stats():
                            active_campaigns=active_campaigns,
                            ad_request_counts=ad_request_counts,
                            flagged_counts=flagged_counts)
+
+@main.route('/export_csv')
+@login_required
+def export_csv():
+    if current_user.role != 'sponsor':
+        return redirect(url_for('main.dashboard'))
+    
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(file_path)
+        except Exception as error:
+            current_app.logger.error("Error removing or closing downloaded file handle", error)
+        return response
+    
+    campaigns = Campaign.query.filter_by(user_id=current_user.id).all()
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Name', 'Description', 'Start Date', 'End Date', 'Budget', 'Visibility'])
+    for campaign in campaigns:
+        cw.writerow([campaign.name, campaign.description, campaign.start_date, campaign.end_date, campaign.budget, campaign.visibility])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=campaigns.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
+
+# This is for testing purposes
+@main.route('/send_daily_reminders')
+def trigger_daily_reminders():
+    send_daily_reminders()
+    return 'Daily reminders sent!', 200
+
+@main.route('/send_monthly_reports')
+def trigger_monthly_reports():
+    send_monthly_reports()
+    return 'Monthly reports sent!', 200
+
+@main.route('/delete_user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'message': f'User {user_id} has been deleted successfully'}), 200
+    return jsonify({'message': 'User not found'}), 404
