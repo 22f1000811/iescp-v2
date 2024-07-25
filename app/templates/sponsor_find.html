@@ -1,0 +1,67 @@
+{% extends "sponsor_dashboard.html" %}
+{% block tab_content %}
+<h2>Find Influencers</h2>
+<form method="GET" action="{{ url_for('main.sponsor_find') }}">
+    <div class="form-group">
+        <input type="text" name="search" class="form-control" placeholder="Search for influencers...">
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+<div class="scrollable-container sponsor-find-padding">
+    <div class="row-container">
+        {% for influencer in active_influencer %}
+        <!-- <h4> {influencers} </h4> -->
+        <!-- <li>{{ influencer.name }} (Ends: {{ influencer.end_date }})</li> -->
+        <div class="col-md-3">
+            <div class="request-box card glassmorphism">
+                <div class="card-body">
+                    <h4 class="card-title">{{ influencer.username }}</h4>
+                    {% if influencer.flag == 1 %}
+                        <p class="text-danger">This User is flagged by a Admin</p>
+                    {% endif %}
+                    <!-- <p class="card-text">{{ influencer.platforms }}</p> -->
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#influencerModal" data-id="{{ influencer.id }}">View</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="influencerModal" tabindex="-1" role="dialog" aria-labelledby="influencerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="influencerModalLabel">Influencer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Influencer details will be loaded here dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    $('#influencerModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var influencerId = button.data('id');
+
+        var modal = $(this);
+        modal.find('.modal-body').load('/influencer_details/' + influencerId);
+    });
+});
+</script>
+{% endblock %}
+
+
+
+
